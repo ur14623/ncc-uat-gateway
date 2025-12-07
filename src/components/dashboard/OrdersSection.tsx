@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/table';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { OrderDetailModal } from './OrderDetailModal';
 
 type OrderStatus = 'New' | 'In Kitchen' | 'Ready' | 'Delivered';
 
@@ -40,7 +41,7 @@ interface Order {
   amount: number;
 }
 
-const mockOrders: Order[] = [
+const initialOrders: Order[] = [
   { id: 'ORD-001', table: 'Table 5', customer: 'John Smith', waiter: 'Sarah Johnson', items: 3, status: 'In Kitchen', time: '7:56 PM', amount: 51.96 },
   { id: 'ORD-002', table: 'Table 12', customer: 'Emily Davis', waiter: 'Mike Wilson', items: 3, status: 'Ready', time: '7:36 PM', amount: 72.98 },
   { id: 'ORD-003', table: 'Table 8', customer: 'Michael Brown', waiter: null, items: 3, status: 'New', time: '8:18 PM', amount: 64.95 },
@@ -66,12 +67,15 @@ const getStatusBadgeClass = (status: OrderStatus) => {
 };
 
 export const OrdersSection = () => {
+  const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [waiterFilter, setWaiterFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const filteredOrders = mockOrders.filter((order) => {
+  const filteredOrders = orders.filter((order) => {
     const matchesSearch =
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -117,6 +121,22 @@ export const OrdersSection = () => {
     a.download = 'orders.csv';
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleOrderClick = (order: Order) => {
+    setSelectedOrder(order);
+    setIsModalOpen(true);
+  };
+
+  const handleStatusUpdate = (orderId: string, newStatus: OrderStatus) => {
+    setOrders((prev) =>
+      prev.map((order) =>
+        order.id === orderId ? { ...order, status: newStatus } : order
+      )
+    );
+    setSelectedOrder((prev) =>
+      prev && prev.id === orderId ? { ...prev, status: newStatus } : prev
+    );
   };
 
   return (
@@ -246,6 +266,7 @@ export const OrdersSection = () => {
                 <TableRow
                   key={order.id}
                   className="hover:bg-muted/30 cursor-pointer transition-colors"
+                  onClick={() => handleOrderClick(order)}
                 >
                   <TableCell className="font-medium">{order.id}</TableCell>
                   <TableCell>{order.table}</TableCell>
@@ -275,6 +296,14 @@ export const OrdersSection = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Order Detail Modal */}
+      <OrderDetailModal
+        order={selectedOrder}
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        onStatusUpdate={handleStatusUpdate}
+      />
     </div>
   );
 };
