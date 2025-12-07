@@ -1,25 +1,22 @@
-import { useState } from 'react';
-import { Header } from './Header';
-import { Sidebar } from './Sidebar';
-import { Footer } from './Footer';
+import { ReactNode } from 'react';
+import { ManagerSidebar } from './ManagerSidebar';
+import { SidebarProvider } from '@/contexts/SidebarContext';
 
 interface MainLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export const MainLayout = ({ children }: MainLayoutProps) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-      <div className="flex flex-1">
-        <Sidebar isOpen={isSidebarOpen} />
-        <main className="flex-1 p-6 bg-muted/30">
-          {children}
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background">
+        <ManagerSidebar />
+        <main className="flex-1 overflow-auto">
+          <div className="min-h-screen p-6">
+            {children}
+          </div>
         </main>
       </div>
-      <Footer />
-    </div>
+    </SidebarProvider>
   );
 };
