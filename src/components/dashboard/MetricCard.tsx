@@ -40,40 +40,29 @@ export const MetricCard = ({
   className,
 }: MetricCardProps) => {
   return (
-    <div
-      className={cn(
-        'group relative overflow-hidden rounded-xl border bg-card p-5 transition-all duration-300 hover:shadow-lg hover:border-primary/30',
-        variantStyles[variant],
-        className
-      )}
-    >
-      {/* Background Glow */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/5 to-transparent" />
+    <div className={cn('flex items-center gap-4 p-4', className)}>
+      <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg shrink-0', iconVariantStyles[variant])}>
+        <Icon className="h-5 w-5" />
+      </div>
       
-      <div className="relative flex items-start justify-between">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <div className="flex items-baseline gap-2">
-            <h3 className="text-3xl font-bold text-foreground tracking-tight">{value}</h3>
-            {trend && (
-              <span
-                className={cn(
-                  'text-sm font-medium',
-                  trend.isPositive ? 'text-status-delivered' : 'text-status-kitchen'
-                )}
-              >
-                {trend.isPositive ? '+' : ''}{trend.value}%
-              </span>
-            )}
-          </div>
-          {subtitle && (
-            <p className="text-xs text-muted-foreground">{subtitle}</p>
+      <div className="min-w-0">
+        <p className="text-sm text-muted-foreground truncate">{title}</p>
+        <div className="flex items-baseline gap-2">
+          <h3 className="text-2xl font-bold text-foreground">{value}</h3>
+          {trend && (
+            <span
+              className={cn(
+                'text-sm font-medium',
+                trend.isPositive ? 'text-status-delivered' : 'text-status-kitchen'
+              )}
+            >
+              {trend.isPositive ? '+' : ''}{trend.value}%
+            </span>
           )}
         </div>
-        
-        <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', iconVariantStyles[variant])}>
-          <Icon className="h-6 w-6" />
-        </div>
+        {subtitle && (
+          <p className="text-xs text-muted-foreground">{subtitle}</p>
+        )}
       </div>
     </div>
   );

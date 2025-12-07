@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { StaffCard } from '@/components/staff/StaffCard';
 import { StaffList } from '@/components/staff/StaffList';
-import { CreateStaffDialog } from '@/components/staff/CreateStaffDialog';
+import { CreateChefDialog } from '@/components/chef/CreateChefDialog';
 import { mockChefs } from '@/data/mockData';
 import { ChefHat, TrendingUp, Clock, Award, LayoutGrid, List, Plus } from 'lucide-react';
 import { MetricCard } from '@/components/dashboard/MetricCard';
@@ -119,10 +119,9 @@ const ChefManagement = () => {
         </div>
 
         {/* Create Chef Dialog */}
-        <CreateStaffDialog
+        <CreateChefDialog
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}
-          type="chef"
         />
       </div>
     </MainLayout>

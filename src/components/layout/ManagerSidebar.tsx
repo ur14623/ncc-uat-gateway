@@ -1,7 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useSidebarContext } from '@/contexts/SidebarContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import {
   LayoutDashboard,
   ClipboardList,
@@ -11,13 +10,9 @@ import {
   UserCircle,
   Megaphone,
   BarChart3,
-  Bell,
-  Settings,
   ChevronLeft,
   ChevronRight,
   Utensils,
-  Sun,
-  Moon,
 } from 'lucide-react';
 
 const navItems = [
@@ -33,7 +28,6 @@ const navItems = [
 
 export const ManagerSidebar = () => {
   const { collapsed, setCollapsed } = useSidebarContext();
-  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
 
   return (
@@ -100,48 +94,11 @@ export const ManagerSidebar = () => {
         })}
       </nav>
 
-      {/* Bottom Section */}
-      <div className="border-t border-sidebar-border p-3 space-y-1">
-        {/* Theme Toggle */}
-        <button
-          onClick={toggleTheme}
-          className={cn(
-            'flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent transition-colors'
-          )}
-        >
-          {theme === 'dark' ? (
-            <Sun className="h-5 w-5 text-primary flex-shrink-0" />
-          ) : (
-            <Moon className="h-5 w-5 text-primary flex-shrink-0" />
-          )}
-          {!collapsed && (
-            <span className="text-sm font-medium">
-              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-            </span>
-          )}
-        </button>
-
-        <button
-          className={cn(
-            'flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent transition-colors'
-          )}
-        >
-          <Bell className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-          {!collapsed && <span className="text-sm font-medium">Notifications</span>}
-          {!collapsed && (
-            <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-              5
-            </span>
-          )}
-        </button>
-        <button
-          className={cn(
-            'flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent transition-colors'
-          )}
-        >
-          <Settings className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-          {!collapsed && <span className="text-sm font-medium">Settings</span>}
-        </button>
+      {/* Bottom Section - minimal */}
+      <div className="border-t border-sidebar-border p-3">
+        <div className="text-xs text-muted-foreground text-center">
+          {!collapsed && <span>RestaurantOS v1.0</span>}
+        </div>
       </div>
     </aside>
   );

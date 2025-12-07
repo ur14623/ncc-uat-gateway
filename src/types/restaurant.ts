@@ -53,6 +53,63 @@ export interface Waiter extends Staff {
   tipsToday: number;
 }
 
+export type ChefPosition = 'head_chef' | 'chef' | 'assistant_chef';
+export type KitchenSection = 'veg' | 'non_veg' | 'snacks' | 'bakery' | 'other';
+export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snacks';
+export type WorkShift = 'morning' | 'afternoon' | 'evening' | 'rotational';
+export type TaskType = 'meal_preparation' | 'cleaning' | 'ingredient_preprocessing' | 'food_serving_supervision' | 'inventory_checks';
+export type TaskStatus = 'pending' | 'in_progress' | 'completed';
+export type AttendanceStatus = 'present' | 'absent' | 'late' | 'early_leave';
+export type LeaveType = 'sick' | 'annual' | 'emergency';
+export type LeaveApprovalStatus = 'pending' | 'approved' | 'rejected';
+
+export interface ChefTask {
+  id: string;
+  chefId: string;
+  taskType: TaskType;
+  description?: string;
+  status: TaskStatus;
+  assignedDate: Date;
+  completedDate?: Date;
+}
+
+export interface ChefOrderAssignment {
+  id: string;
+  orderId: string;
+  chefId: string;
+  date: Date;
+  mealType: MealType;
+  taskType: TaskType;
+  status: TaskStatus;
+  notes?: string;
+}
+
+export interface AttendanceLog {
+  id: string;
+  chefId: string;
+  date: Date;
+  timeIn?: Date;
+  timeOut?: Date;
+  status: AttendanceStatus;
+}
+
+export interface LeaveRequest {
+  id: string;
+  chefId: string;
+  leaveType: LeaveType;
+  startDate: Date;
+  endDate: Date;
+  reason: string;
+  approvalStatus: LeaveApprovalStatus;
+}
+
+export interface ChefDocument {
+  id: string;
+  type: 'id_passport' | 'health_certificate' | 'food_safety_certificate';
+  fileName: string;
+  uploadedAt: Date;
+}
+
 export interface Chef extends Staff {
   role: 'chef';
   station: 'grill' | 'fry' | 'salad' | 'desserts' | 'main';
@@ -60,6 +117,25 @@ export interface Chef extends Staff {
   ordersCompletedToday: number;
   avgCookingTime: number;
   accuracyRate: number;
+  // Extended fields
+  employeeId?: string;
+  position?: ChefPosition;
+  gender?: 'male' | 'female' | 'other';
+  dateOfBirth?: Date;
+  phone?: string;
+  email?: string;
+  address?: string;
+  experience?: number;
+  kitchenSection?: KitchenSection;
+  assignedMealType?: MealType;
+  workShift?: WorkShift;
+  salary?: number;
+  joinDate?: Date;
+  documents?: ChefDocument[];
+  tasks?: ChefTask[];
+  orderAssignments?: ChefOrderAssignment[];
+  attendanceLogs?: AttendanceLog[];
+  leaveRequests?: LeaveRequest[];
 }
 
 export interface Customer {
