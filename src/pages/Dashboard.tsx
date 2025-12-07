@@ -1,5 +1,6 @@
 import { MainLayout } from '@/components/layout/MainLayout';
 import { MetricCard } from '@/components/dashboard/MetricCard';
+import { OrdersSection } from '@/components/dashboard/OrdersSection';
 import { mockDashboardMetrics } from '@/data/mockData';
 import { ChefHat, Truck, Clock } from 'lucide-react';
 
@@ -46,6 +47,9 @@ const Dashboard = () => {
             subtitle="Awaiting processing"
           />
         </div>
+
+        {/* Orders Section */}
+        <OrdersSection />
       </div>
     </MainLayout>
   );

@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { ManagerSidebar } from './ManagerSidebar';
 import { TopNavbar } from './TopNavbar';
+import { Footer } from './Footer';
 import { SidebarProvider } from '@/contexts/SidebarContext';
 
 interface MainLayoutProps {
@@ -19,6 +20,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               {children}
             </div>
           </main>
+          <Footer />
         </div>
       </div>
     </SidebarProvider>
