@@ -13,10 +13,10 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <ManagerSidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-screen">
           <TopNavbar />
           <main className="flex-1 overflow-auto">
-            <div className="min-h-full p-6">
+            <div className="p-6">
               {children}
             </div>
           </main>
