@@ -36,11 +36,12 @@
 
     --radius: 0.75rem;
 
-    --status-kitchen: 0 84% 60%;
+    --status-new: 217 91% 60%;
+    --status-kitchen: 25 95% 53%;
+    --status-ready: 280 80% 60%;
     --status-delivered: 142 76% 36%;
     --status-pending: 45 93% 47%;
     --status-info: 217 91% 60%;
-    --status-new: 280 80% 60%;
 
     --gradient-primary: linear-gradient(135deg, hsl(25 95% 53%) 0%, hsl(15 95% 48%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 14% 98%) 100%);
@@ -89,11 +90,12 @@
     --input: 222 30% 18%;
     --ring: 35 100% 55%;
 
-    --status-kitchen: 0 84% 60%;
+    --status-new: 217 91% 60%;
+    --status-kitchen: 25 95% 53%;
+    --status-ready: 280 80% 60%;
     --status-delivered: 142 76% 45%;
     --status-pending: 45 100% 55%;
     --status-info: 217 91% 60%;
-    --status-new: 280 80% 60%;
 
     --gradient-primary: linear-gradient(135deg, hsl(35 100% 55%) 0%, hsl(25 100% 50%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(222 47% 10%) 0%, hsl(222 47% 8%) 100%);
@@ -139,8 +141,16 @@
     background: var(--gradient-card);
   }
 
+  .status-new {
+    @apply bg-[hsl(var(--status-new))] text-white;
+  }
+
   .status-kitchen {
     @apply bg-[hsl(var(--status-kitchen))] text-white;
+  }
+
+  .status-ready {
+    @apply bg-[hsl(var(--status-ready))] text-white;
   }
 
   .status-delivered {
@@ -153,10 +163,6 @@
 
   .status-info {
     @apply bg-[hsl(var(--status-info))] text-white;
-  }
-
-  .status-new {
-    @apply bg-[hsl(var(--status-new))] text-white;
   }
 
   .animate-pulse-slow {
