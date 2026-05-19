@@ -77,7 +77,7 @@ function BookDetailPage() {
                 ) : (
                   languages.map((l) => (
                     <button
-                      key={l.language_id}
+                      key={l.id}
                       onClick={() => setLang(l.code)}
                       className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                         l.code === lang
