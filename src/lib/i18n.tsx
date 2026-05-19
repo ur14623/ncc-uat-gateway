@@ -1,6 +1,13 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { quizService, type QuizLanguage } from "@/services/api";
+import { bibleService } from "@/services/api";
+
+export type AppLanguage = {
+  id: number;
+  code: string;
+  name: string;
+  native_name: string;
+};
 
 export type Lang = string;
 type BuiltinLang = "en" | "am" | "om" | "ti";
@@ -120,7 +127,7 @@ type I18nCtx = {
   lang: Lang;
   setLang: (l: Lang) => void;
   t: Dict;
-  languages: QuizLanguage[];
+  languages: AppLanguage[];
   languageId: number | null;
   languagesLoading: boolean;
   languagesError: string | null;
@@ -146,15 +153,15 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   };
 
   const langsQuery = useQuery({
-    queryKey: ["quiz-languages"],
-    queryFn: () => quizService.getLanguages(),
+    queryKey: ["bible-languages"],
+    queryFn: () => bibleService.getLanguages(),
     staleTime: 1000 * 60 * 60,
     retry: 1,
   });
 
-  const languages = langsQuery.data?.data ?? [];
+  const languages: AppLanguage[] = langsQuery.data?.data ?? [];
   const selected = languages.find((l) => l.code === lang);
-  const languageId = selected?.language_id ?? null;
+  const languageId = selected?.id ?? null;
 
   const dict = (DICTS as Record<string, Dict>)[lang] ?? DICTS.en;
   return (

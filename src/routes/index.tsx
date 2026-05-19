@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Search, Loader2, BookOpen, ArrowRight } from "lucide-react";
+import { Search, Loader2, BookOpen, ArrowRight, Globe } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/Header";
 import { useI18n } from "@/lib/i18n";
-import { quizService, type QuizBook } from "@/services/api";
+import { bibleService } from "@/services/api";
 import { bookSlug, localizedBookName } from "@/data/bible";
+
+type ApiBook = { id: number; name: string; testament: "Old" | "New"; chapters: number };
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,17 +20,17 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { t, lang } = useI18n();
+  const { t, lang, setLang, languages, languagesLoading } = useI18n();
   const [query, setQuery] = useState("");
 
   const booksQ = useQuery({
-    queryKey: ["quiz-books"],
-    queryFn: () => quizService.getBooks(),
+    queryKey: ["bible-books-by-language", lang],
+    queryFn: () => bibleService.getBooksByLanguage(lang),
     staleTime: 1000 * 60 * 10,
     retry: 1,
   });
 
-  const books: QuizBook[] = booksQ.data?.data ?? [];
+  const books: ApiBook[] = booksQ.data?.books ?? [];
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -38,6 +40,9 @@ function Index() {
       return b.name.toLowerCase().includes(q) || localized.includes(q);
     });
   }, [books, query, lang]);
+
+  const oldBooks = filtered.filter((b) => b.testament === "Old");
+  const newBooks = filtered.filter((b) => b.testament === "New");
 
   return (
     <div className="min-h-screen bg-background">
@@ -52,7 +57,24 @@ function Index() {
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">{t.tagline}</p>
           <p className="mx-auto mt-1 max-w-xl text-sm text-muted-foreground">{t.chooseBook}</p>
-          <div className="mx-auto mt-6 max-w-md">
+          <div className="mx-auto mt-6 flex max-w-xl flex-col gap-3 sm:flex-row">
+            <div className="relative sm:w-56">
+              <Globe className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <select
+                value={lang}
+                onChange={(e) => setLang(e.target.value)}
+                aria-label={t.language}
+                disabled={languagesLoading && languages.length === 0}
+                className="w-full appearance-none rounded-full border border-border bg-card py-2.5 pl-10 pr-4 text-sm text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+              >
+                {languages.length === 0 && <option value={lang}>Loading…</option>}
+                {languages.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.native_name || l.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -61,7 +83,7 @@ function Index() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t.searchPlaceholder}
                 aria-label={t.searchPlaceholder}
-                className="w-full rounded-full border border-border bg-card py-2.5 pl-10 pr-4 text-sm text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="w-full flex-1 rounded-full border border-border bg-card py-2.5 pl-10 pr-4 text-sm text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
           </div>
@@ -78,10 +100,13 @@ function Index() {
         ) : filtered.length === 0 ? (
           <p className="py-16 text-center text-muted-foreground">{t.noResults}</p>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((b, i) => (
-              <BookCard key={b.book_id} index={i} book={b} lang={lang} />
-            ))}
+          <div className="space-y-10">
+            {oldBooks.length > 0 && (
+              <TestamentSection title={t.oldTestament} books={oldBooks} lang={lang} />
+            )}
+            {newBooks.length > 0 && (
+              <TestamentSection title={t.newTestament} books={newBooks} lang={lang} />
+            )}
           </div>
         )}
       </main>
@@ -89,7 +114,23 @@ function Index() {
   );
 }
 
-function BookCard({ index, book, lang }: { index: number; book: QuizBook; lang: string }) {
+function TestamentSection({ title, books, lang }: { title: string; books: ApiBook[]; lang: string }) {
+  return (
+    <section>
+      <div className="mb-4 flex items-baseline justify-between border-b border-border pb-2">
+        <h2 className="font-serif text-2xl font-semibold text-foreground">{title}</h2>
+        <span className="text-sm text-muted-foreground">{books.length}</span>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {books.map((b, i) => (
+          <BookCard key={b.id} index={i} book={b} lang={lang} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function BookCard({ index, book, lang }: { index: number; book: ApiBook; lang: string }) {
   const slug = bookSlug(book.name);
   const localized = localizedBookName(book.name, lang);
 
@@ -108,12 +149,12 @@ function BookCard({ index, book, lang }: { index: number; book: QuizBook; lang: 
           )}
         </div>
         <span className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground">
-          <BookOpen className="h-3 w-3" /> {book.levels.length} levels
+          <BookOpen className="h-3 w-3" /> {book.chapters} {t_chapters_label(book.chapters)}
         </span>
       </div>
 
       <p className="mt-3 text-xs text-muted-foreground">
-        {book.total_questions} total questions
+        {book.testament === "Old" ? "Old Testament" : "New Testament"}
       </p>
 
       <div className="mt-4 flex items-center justify-end gap-1 text-sm font-medium text-primary transition group-hover:gap-2">
@@ -121,4 +162,8 @@ function BookCard({ index, book, lang }: { index: number; book: QuizBook; lang: 
       </div>
     </Link>
   );
+}
+
+function t_chapters_label(n: number) {
+  return n === 1 ? "chapter" : "chapters";
 }
