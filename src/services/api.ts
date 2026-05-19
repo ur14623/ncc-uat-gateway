@@ -47,6 +47,17 @@ export async function apiClient<T>(
 
   const data = await response.json().catch(() => null);
 
+  // Some endpoints (e.g. /api/auth/login) return HTTP 200 but with an
+  // error envelope: `[{status:"error", message, data}, <httpCode>]`.
+  // Detect and surface as ApiError so callers don't treat it as success.
+  if (Array.isArray(data) && data.length === 2 && typeof data[1] === "number") {
+    const [body, code] = data as [any, number];
+    if (code >= 400 || body?.status === "error") {
+      const message = body?.message || body?.error || `HTTP ${code}`;
+      throw new ApiError(message, code, body);
+    }
+  }
+
   if (!response.ok) {
     const message =
       (data as any)?.message || (data as any)?.error || `HTTP ${response.status}`;
@@ -67,7 +78,8 @@ export const authService = {
     apiClient<{ success: boolean; token: string; user: { id: number; username: string; email: string } }>(
       "/api/auth/login",
       "POST",
-      { email, password }
+      // Backend requires `username` (accepts email or username value).
+      { username: email, email, password }
     ),
   googleLoginUrl: (redirectUri: string) =>
     `${API_BASE_URL}/api/auth/google/login?redirect_uri=${encodeURIComponent(redirectUri)}`,
