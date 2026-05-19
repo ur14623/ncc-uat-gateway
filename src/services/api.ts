@@ -309,6 +309,16 @@ export const removeDuplicateVerses = (verses: BibleVerse[]): BibleVerse[] => {
 };
 
 export const bibleService = {
+  getLanguages: () =>
+    apiClient<{ status: string; data: { id: number; code: string; name: string; native_name: string }[] }>(
+      "/api/bible/languages"
+    ),
+
+  getBooksByLanguage: (lang: string) =>
+    apiClient<{ books: { id: number; name: string; testament: "Old" | "New"; chapters: number }[] }>(
+      `/api/bible/books/by-language?language=${encodeURIComponent(lang)}`
+    ),
+
   getBooks: (testament: Testament, lang: string) =>
     apiClient<GetBooksResponse>(
       `/api/bible/testaments/${testament}/books?language=${lang}`
