@@ -1,4 +1,4 @@
-import { createFileRoute, isRedirect, Link, Outlet, redirect, useNavigate, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Globe, BookOpen, BookText, FileQuestion,
   LogOut, Bell, Settings as SettingsIcon, User as UserIcon,
@@ -7,17 +7,6 @@ import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Bible Quiz" }] }),
-  beforeLoad: () => {
-    try {
-      const raw = typeof window !== "undefined" ? localStorage.getItem("bible.user") : null;
-      const u = raw ? JSON.parse(raw) : null;
-      if (!u) throw redirect({ to: "/login" });
-      if (u.role !== "admin") throw redirect({ to: "/" });
-    } catch (e) {
-      if (isRedirect(e)) throw e;
-      throw redirect({ to: "/login" });
-    }
-  },
   component: AdminLayout,
 });
 
