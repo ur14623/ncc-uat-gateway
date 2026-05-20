@@ -2,23 +2,42 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/Header";
-import { bibleService, removeDuplicateVerses, type BibleVerse } from "@/services/api";
+import { bibleService } from "@/services/api";
 import { useI18n } from "@/lib/i18n";
 import { findBook, localizedBookName } from "@/data/bible";
+import { zodValidator } from "@tanstack/zod-adapter";
+import { z } from "zod";
+import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/read/$book")({
+  validateSearch: zodValidator(
+    z.object({ chapter: z.coerce.number().int().positive().optional() })
+  ),
   component: ReadPage,
 });
 
 function ReadPage() {
   const { book: slug } = Route.useParams();
+  const { chapter: selectedChapter } = Route.useSearch();
+  const navigate = useNavigate();
   const { t, lang } = useI18n();
   const localBook = findBook(slug);
   const bookName = localBook?.name ?? slug.replace(/-/g, " ");
 
-  const q = useQuery({
-    queryKey: ["bible-book", bookName, lang],
-    queryFn: () => bibleService.getFullBook(bookName, lang),
+  const chaptersQ = useQuery({
+    queryKey: ["bible-chapters", bookName, lang],
+    queryFn: () => bibleService.getChapters(bookName, lang),
+    staleTime: 1000 * 60 * 30,
+    retry: 1,
+  });
+
+  const chapterNum =
+    selectedChapter ?? chaptersQ.data?.chapters?.[0];
+
+  const chapterQ = useQuery({
+    queryKey: ["bible-chapter", bookName, lang, chapterNum],
+    queryFn: () => bibleService.getChapter(bookName, chapterNum!, lang),
+    enabled: !!chapterNum,
     staleTime: 1000 * 60 * 30,
     retry: 1,
   });
@@ -39,46 +58,63 @@ function ReadPage() {
       </div>
 
       <main className="mx-auto max-w-3xl px-4 py-8">
-        {q.isLoading ? (
-          <div className="flex items-center justify-center py-16 text-muted-foreground">
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading book…
+        <header className="mb-6">
+          <p className="text-sm uppercase tracking-wider text-muted-foreground">{lang}</p>
+          <h2 className="font-serif text-3xl font-semibold text-foreground">{localized}</h2>
+        </header>
+
+        {chaptersQ.isLoading ? (
+          <div className="flex items-center justify-center py-8 text-muted-foreground">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading chapters…
           </div>
-        ) : q.isError ? (
+        ) : chaptersQ.isError ? (
           <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-            Failed to load book. {(q.error as Error)?.message}
+            Failed to load chapters. {(chaptersQ.error as Error)?.message}
           </div>
-        ) : !q.data ? null : (
-          <article className="space-y-8 pb-16">
-            <header>
-              <p className="text-sm uppercase tracking-wider text-muted-foreground">{lang}</p>
-              <h2 className="font-serif text-3xl font-semibold text-foreground">{localized}</h2>
-            </header>
-            {q.data.chapters.map((ch) => (
-              <ChapterBlock key={ch.chapter} chapter={ch.chapter} verses={ch.verses} />
+        ) : (
+          <div className="mb-8 flex flex-wrap gap-2">
+            {(chaptersQ.data?.chapters ?? []).map((c) => (
+              <button
+                key={c}
+                onClick={() =>
+                  navigate({ to: "/read/$book", params: { book: slug }, search: { chapter: c } })
+                }
+                className={`min-w-10 px-3 py-1.5 text-sm font-medium border transition ${
+                  c === chapterNum
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card text-foreground hover:border-primary/40"
+                }`}
+              >
+                {c}
+              </button>
             ))}
-          </article>
+          </div>
         )}
+
+        {chapterQ.isLoading ? (
+          <div className="flex items-center justify-center py-16 text-muted-foreground">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading chapter…
+          </div>
+        ) : chapterQ.isError ? (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+            Failed to load chapter. {(chapterQ.error as Error)?.message}
+          </div>
+        ) : chapterQ.data ? (
+          <article className="pb-16">
+            <h3 className="mb-3 font-serif text-2xl font-semibold text-foreground">
+              {t.chapter} {chapterQ.data.chapter}
+            </h3>
+            <div className="prose prose-stone max-w-none font-serif text-lg leading-relaxed text-foreground">
+              {chapterQ.data.verses.map((v) => (
+                <p key={v.verse} className="mb-3">
+                  <sup className="mr-1 text-xs font-semibold text-primary">{v.verse}</sup>
+                  {v.text}
+                </p>
+              ))}
+            </div>
+          </article>
+        ) : null}
       </main>
     </div>
-  );
-}
-
-function ChapterBlock({ chapter, verses }: { chapter: number; verses: BibleVerse[] }) {
-  const { t } = useI18n();
-  const clean = removeDuplicateVerses(verses);
-  return (
-    <section>
-      <h3 className="mb-3 font-serif text-2xl font-semibold text-foreground">
-        {t.chapter} {chapter}
-      </h3>
-      <div className="prose prose-stone max-w-none font-serif text-lg leading-relaxed text-foreground">
-        {clean.map((v) => (
-          <p key={v.verse} className="mb-3">
-            <sup className="mr-1 text-xs font-semibold text-primary">{v.verse}</sup>
-            {v.text}
-          </p>
-        ))}
-      </div>
-    </section>
   );
 }
