@@ -5,14 +5,13 @@ import { Header } from "@/components/Header";
 import { bibleService } from "@/services/api";
 import { useI18n } from "@/lib/i18n";
 import { findBook, localizedBookName } from "@/data/bible";
-import { zodValidator } from "@tanstack/zod-adapter";
-import { z } from "zod";
 import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/read/$book")({
-  validateSearch: zodValidator(
-    z.object({ chapter: z.coerce.number().int().positive().optional() })
-  ),
+  validateSearch: (search: Record<string, unknown>) => {
+    const n = Number(search.chapter);
+    return { chapter: Number.isFinite(n) && n > 0 ? n : undefined };
+  },
   component: ReadPage,
 });
 
