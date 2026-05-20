@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Loader2, Globe, Brain } from "lucide-react";
+import { ArrowLeft, Loader2, Globe } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Header } from "@/components/Header";
 import { bibleService } from "@/services/api";
@@ -47,13 +47,7 @@ function BookDetailPage() {
           <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4" /> All books
           </Link>
-          <Link
-            to="/quiz/$book"
-            params={{ book: slug }}
-            className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-secondary"
-          >
-            <Brain className="h-3.5 w-3.5" /> Take quiz
-          </Link>
+          <span />
         </div>
       </div>
 
