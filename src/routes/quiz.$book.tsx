@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2, Check, X, Home, BookOpen } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, Loader2, Check, X, Home, BookOpen, ChevronDown, AlertTriangle } from "lucide-react";
 import { Header } from "@/components/Header";
-import { quizService, type QuizQuestion, type AnswerResult } from "@/services/api";
+import { quizService, type QuizQuestion, type AnswerResult, type QuizLevel } from "@/services/api";
 import { useAuth } from "@/lib/auth";
 import { bookSlug, findBook, localizedBookName } from "@/data/bible";
 import { useI18n } from "@/lib/i18n";
+import { useQuery } from "@tanstack/react-query";
 
 type Search = { book_id: number; level_id: number; language_id: number };
 
@@ -42,6 +43,39 @@ function QuizPage() {
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Level switcher
+  const levelsQ = useQuery({
+    queryKey: ["quiz-levels", book_id],
+    queryFn: () => quizService.getLevels(book_id),
+    enabled: !!book_id,
+    staleTime: 1000 * 60 * 10,
+  });
+  const levels: QuizLevel[] = levelsQ.data?.data.levels ?? [];
+  const currentLevel = levels.find((l) => l.level_id === level_id) ?? null;
+  const [levelOpen, setLevelOpen] = useState(false);
+  const [pendingLevel, setPendingLevel] = useState<QuizLevel | null>(null);
+  const levelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (levelRef.current && !levelRef.current.contains(e.target as Node)) setLevelOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
+  const confirmLevelChange = () => {
+    if (!pendingLevel) return;
+    const newLevel = pendingLevel;
+    setPendingLevel(null);
+    navigate({
+      to: "/quiz/$book",
+      params: { book: bookSlug(bookName) },
+      search: { book_id, level_id: newLevel.level_id, language_id },
+      replace: true,
+    });
+  };
 
   // Start quiz on mount
   useEffect(() => {
@@ -147,14 +181,91 @@ function QuizPage() {
     <div className="min-h-screen bg-background">
       <Header />
       <div className="border-b border-border bg-card/50">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
+        <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4" /> Home
           </Link>
           <h1 className="font-serif text-lg font-semibold text-foreground">{localized} Quiz</h1>
-          <span className="text-xs text-muted-foreground tabular-nums">
-            {progress.total > 0 ? `${progress.current} / ${progress.total}` : ""}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {progress.total > 0 ? `${progress.current} / ${progress.total}` : ""}
+            </span>
+            {levels.length > 0 && (
+              <div className="relative" ref={levelRef}>
+                <button
+                  type="button"
+                  onClick={() => setLevelOpen((o) => !o)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:border-primary/40"
+                >
+                  {currentLevel ? (
+                    <>
+                      <span style={{ color: currentLevel.color }}>{currentLevel.icon}</span>
+                      <span>{currentLevel.name}</span>
+                    </>
+                  ) : (
+                    <span>Level</span>
+                  )}
+                  <ChevronDown className={`h-3.5 w-3.5 transition ${levelOpen ? "rotate-180" : ""}`} />
+                </button>
+                {levelOpen && (
+                  <div className="absolute right-0 z-30 mt-2 w-72 overflow-hidden rounded-xl border border-border bg-popover shadow-xl">
+                    <ul className="max-h-80 overflow-y-auto py-1">
+                      {levels.map((lvl) => {
+                        const active = lvl.level_id === level_id;
+                        return (
+                          <li key={lvl.level_id}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLevelOpen(false);
+                                if (active) return;
+                                if (finalScore) {
+                                  navigate({
+                                    to: "/quiz/$book",
+                                    params: { book: bookSlug(bookName) },
+                                    search: { book_id, level_id: lvl.level_id, language_id },
+                                    replace: true,
+                                  });
+                                } else {
+                                  setPendingLevel(lvl);
+                                }
+                              }}
+                              className={`flex w-full items-start gap-3 px-3 py-2.5 text-left transition hover:bg-secondary ${
+                                active ? "bg-secondary/70" : ""
+                              }`}
+                            >
+                              <span
+                                className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-lg"
+                                style={{ backgroundColor: `${lvl.color}25`, color: lvl.color }}
+                              >
+                                {lvl.icon}
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="flex items-center gap-2">
+                                  <span className="text-sm font-semibold text-foreground">{lvl.name}</span>
+                                  {active && (
+                                    <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-primary">
+                                      Current
+                                    </span>
+                                  )}
+                                </span>
+                                <span className="line-clamp-2 text-xs text-muted-foreground">
+                                  {lvl.description}
+                                </span>
+                              </span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <div className="border-t border-border bg-muted/30 px-3 py-2 text-[11px] text-muted-foreground">
+                      Changing level will restart the quiz.
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -282,6 +393,40 @@ function QuizPage() {
           </div>
         ) : null}
       </main>
+
+      {pendingLevel && currentLevel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl">
+            <div className="flex items-start gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-destructive/10 text-destructive">
+                <AlertTriangle className="h-5 w-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-serif text-lg font-semibold text-foreground">Change difficulty?</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Switching from <span className="font-medium text-foreground">{currentLevel.name}</span> to{" "}
+                  <span className="font-medium text-foreground">{pendingLevel.name}</span> will restart the quiz with new
+                  questions. Current progress ({progress.current}/{progress.total}) will be lost.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                onClick={() => setPendingLevel(null)}
+                className="rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmLevelChange}
+                className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+              >
+                Confirm change
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
