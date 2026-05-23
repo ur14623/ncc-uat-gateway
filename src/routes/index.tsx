@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Search, Loader2, BookOpen, ArrowRight, Globe } from "lucide-react";
+import { Search, Loader2, BookOpen, ArrowRight, TextSearch } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/Header";
+import { VerseOfTheDay } from "@/components/VerseOfTheDay";
 import { useI18n } from "@/lib/i18n";
 import { bibleService } from "@/services/api";
 import { bookSlug, localizedBookName } from "@/data/bible";
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { t, lang, setLang, languages, languagesLoading } = useI18n();
+  const { t, lang } = useI18n();
   const [query, setQuery] = useState("");
 
   const booksQ = useQuery({
@@ -48,6 +49,7 @@ function Index() {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="mx-auto max-w-6xl px-4 py-10">
+        <VerseOfTheDay />
         <section className="mb-8 text-center">
           <p className="text-sm font-medium uppercase tracking-wider text-primary">
             {t.booksCount(books.length || 66)}
@@ -57,35 +59,24 @@ function Index() {
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">{t.tagline}</p>
           <p className="mx-auto mt-1 max-w-xl text-sm text-muted-foreground">{t.chooseBook}</p>
-          <div className="mx-auto mt-6 flex max-w-xl flex-col gap-3 sm:flex-row">
-            <div className="relative sm:w-56">
-              <Globe className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <select
-                value={lang}
-                onChange={(e) => setLang(e.target.value)}
-                aria-label={t.language}
-                disabled={languagesLoading && languages.length === 0}
-                className="w-full appearance-none rounded-full border border-border bg-card py-2.5 pl-10 pr-4 text-sm text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-              >
-                {languages.length === 0 && <option value={lang}>Loading…</option>}
-                {languages.map((l) => (
-                  <option key={l.code} value={l.code}>
-                    {l.native_name || l.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="mx-auto mt-6 flex max-w-xl flex-col gap-2 sm:flex-row">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t.searchPlaceholder}
                 aria-label={t.searchPlaceholder}
-                className="w-full flex-1 rounded-full border border-border bg-card py-2.5 pl-10 pr-4 text-sm text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="w-full rounded-full border border-border bg-card py-3 pl-11 pr-4 text-sm text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
+            <Link
+              to="/search"
+              className="inline-flex items-center justify-center gap-1.5 rounded-full border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:text-primary"
+            >
+              <TextSearch className="h-4 w-4" /> Search verses
+            </Link>
           </div>
         </section>
 

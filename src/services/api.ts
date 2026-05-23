@@ -130,6 +130,13 @@ export const userService = {
       data
     ),
 
+  changePassword: (data: { current_password: string; new_password: string }) =>
+    apiClient<{ success: boolean; message: string }>(
+      "/api/users/change-password",
+      "POST",
+      data
+    ),
+
   getStats: () =>
     apiClient<{ success: boolean; stats: Record<string, number> }>("/api/users/stats"),
 
@@ -209,12 +216,27 @@ export type AnswerResult = {
   };
 };
 
+export type QuizLevel = {
+  level_id: number;
+  level_number: number;
+  name: string;
+  description: string;
+  color: string;
+  icon: string;
+};
+
 export const quizService = {
   getLanguages: () =>
     apiClient<{ success: boolean; data: QuizLanguage[] }>("/api/quiz/languages"),
 
   getBooks: () =>
     apiClient<{ success: boolean; data: QuizBook[] }>("/api/quiz/books"),
+
+  getLevels: (book_id: number) =>
+    apiClient<{
+      success: boolean;
+      data: { book_id: number; book_name: string; levels: QuizLevel[] };
+    }>(`/api/quiz/books/${book_id}/levels`),
 
   start: (book_id: number, level_id: number, language_id: number) =>
     apiClient<{ success: boolean; data: QuizAttempt }>(

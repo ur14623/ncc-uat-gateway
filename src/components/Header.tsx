@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, User as UserIcon, LogOut, Globe, Check } from "lucide-react";
+import { BookOpen, User as UserIcon, LogOut, Globe, Check, LayoutDashboard, BarChart3, History, BookMarked } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useI18n, LANGS } from "@/lib/i18n";
@@ -76,20 +76,28 @@ export function Header() {
             </Link>
           )}
           {user && open && (
-            <div className="absolute right-0 mt-2 w-52 overflow-hidden rounded-lg border border-border bg-popover shadow-lg">
-              <Link
-                to="/account"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2 px-4 py-2 text-sm text-popover-foreground hover:bg-secondary"
-              >
-                <UserIcon className="h-4 w-4" /> {t.myAccount}
+            <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-lg border border-border bg-popover shadow-lg">
+              <Link to="/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-popover-foreground hover:bg-secondary">
+                <LayoutDashboard className="h-4 w-4" /> Dashboard
+              </Link>
+              <Link to="/profile" onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-popover-foreground hover:bg-secondary">
+                <UserIcon className="h-4 w-4" /> Profile
+              </Link>
+              <Link to="/statistics" onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-popover-foreground hover:bg-secondary">
+                <BarChart3 className="h-4 w-4" /> Statistics
+              </Link>
+              <Link to="/history" onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-popover-foreground hover:bg-secondary">
+                <History className="h-4 w-4" /> Quiz history
+              </Link>
+              <Link to="/reading-progress" onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-popover-foreground hover:bg-secondary">
+                <BookMarked className="h-4 w-4" /> Reading progress
               </Link>
               <button
                 onClick={() => {
                   setOpen(false);
                   logout();
                 }}
-                className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-popover-foreground hover:bg-secondary"
+                className="flex w-full items-center gap-2 border-t border-border px-4 py-2 text-left text-sm text-popover-foreground hover:bg-secondary"
               >
                 <LogOut className="h-4 w-4" /> {t.logout}
               </button>

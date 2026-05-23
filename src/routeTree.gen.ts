@@ -9,13 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StatisticsRouteImport } from './routes/statistics'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as ReadingProgressRouteImport } from './routes/reading-progress'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as HistoryRouteImport } from './routes/history'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as ReadBookRouteImport } from './routes/read.$book'
 import { Route as QuizBookRouteImport } from './routes/quiz.$book'
+import { Route as QuizSetupBookRouteImport } from './routes/quiz-setup.$book'
+import { Route as ProfileEditRouteImport } from './routes/profile.edit'
+import { Route as ProfileChangePasswordRouteImport } from './routes/profile.change-password'
 import { Route as BookBookRouteImport } from './routes/book.$book'
 import { Route as AuthGoogleCallbackRouteImport } from './routes/auth.google-callback'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
@@ -24,9 +33,39 @@ import { Route as AdminLanguagesRouteImport } from './routes/admin.languages'
 import { Route as AdminBooksRouteImport } from './routes/admin.books'
 import { Route as AdminBibleImportRouteImport } from './routes/admin.bible-import'
 
+const StatisticsRoute = StatisticsRouteImport.update({
+  id: '/statistics',
+  path: '/statistics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReadingProgressRoute = ReadingProgressRouteImport.update({
+  id: '/reading-progress',
+  path: '/reading-progress',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -58,6 +97,21 @@ const QuizBookRoute = QuizBookRouteImport.update({
   id: '/quiz/$book',
   path: '/quiz/$book',
   getParentRoute: () => rootRouteImport,
+} as any)
+const QuizSetupBookRoute = QuizSetupBookRouteImport.update({
+  id: '/quiz-setup/$book',
+  path: '/quiz-setup/$book',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileEditRoute = ProfileEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => ProfileRoute,
+} as any)
+const ProfileChangePasswordRoute = ProfileChangePasswordRouteImport.update({
+  id: '/change-password',
+  path: '/change-password',
+  getParentRoute: () => ProfileRoute,
 } as any)
 const BookBookRoute = BookBookRouteImport.update({
   id: '/book/$book',
@@ -99,7 +153,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
+  '/dashboard': typeof DashboardRoute
+  '/history': typeof HistoryRoute
   '/login': typeof LoginRoute
+  '/profile': typeof ProfileRouteWithChildren
+  '/reading-progress': typeof ReadingProgressRoute
+  '/search': typeof SearchRoute
+  '/statistics': typeof StatisticsRoute
   '/admin/bible-import': typeof AdminBibleImportRoute
   '/admin/books': typeof AdminBooksRoute
   '/admin/languages': typeof AdminLanguagesRoute
@@ -107,6 +167,9 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/auth/google-callback': typeof AuthGoogleCallbackRoute
   '/book/$book': typeof BookBookRoute
+  '/profile/change-password': typeof ProfileChangePasswordRoute
+  '/profile/edit': typeof ProfileEditRoute
+  '/quiz-setup/$book': typeof QuizSetupBookRoute
   '/quiz/$book': typeof QuizBookRoute
   '/read/$book': typeof ReadBookRoute
   '/admin/': typeof AdminIndexRoute
@@ -114,7 +177,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
+  '/dashboard': typeof DashboardRoute
+  '/history': typeof HistoryRoute
   '/login': typeof LoginRoute
+  '/profile': typeof ProfileRouteWithChildren
+  '/reading-progress': typeof ReadingProgressRoute
+  '/search': typeof SearchRoute
+  '/statistics': typeof StatisticsRoute
   '/admin/bible-import': typeof AdminBibleImportRoute
   '/admin/books': typeof AdminBooksRoute
   '/admin/languages': typeof AdminLanguagesRoute
@@ -122,6 +191,9 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/auth/google-callback': typeof AuthGoogleCallbackRoute
   '/book/$book': typeof BookBookRoute
+  '/profile/change-password': typeof ProfileChangePasswordRoute
+  '/profile/edit': typeof ProfileEditRoute
+  '/quiz-setup/$book': typeof QuizSetupBookRoute
   '/quiz/$book': typeof QuizBookRoute
   '/read/$book': typeof ReadBookRoute
   '/admin': typeof AdminIndexRoute
@@ -131,7 +203,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
+  '/dashboard': typeof DashboardRoute
+  '/history': typeof HistoryRoute
   '/login': typeof LoginRoute
+  '/profile': typeof ProfileRouteWithChildren
+  '/reading-progress': typeof ReadingProgressRoute
+  '/search': typeof SearchRoute
+  '/statistics': typeof StatisticsRoute
   '/admin/bible-import': typeof AdminBibleImportRoute
   '/admin/books': typeof AdminBooksRoute
   '/admin/languages': typeof AdminLanguagesRoute
@@ -139,6 +217,9 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/auth/google-callback': typeof AuthGoogleCallbackRoute
   '/book/$book': typeof BookBookRoute
+  '/profile/change-password': typeof ProfileChangePasswordRoute
+  '/profile/edit': typeof ProfileEditRoute
+  '/quiz-setup/$book': typeof QuizSetupBookRoute
   '/quiz/$book': typeof QuizBookRoute
   '/read/$book': typeof ReadBookRoute
   '/admin/': typeof AdminIndexRoute
@@ -149,7 +230,13 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/admin'
+    | '/dashboard'
+    | '/history'
     | '/login'
+    | '/profile'
+    | '/reading-progress'
+    | '/search'
+    | '/statistics'
     | '/admin/bible-import'
     | '/admin/books'
     | '/admin/languages'
@@ -157,6 +244,9 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/auth/google-callback'
     | '/book/$book'
+    | '/profile/change-password'
+    | '/profile/edit'
+    | '/quiz-setup/$book'
     | '/quiz/$book'
     | '/read/$book'
     | '/admin/'
@@ -164,7 +254,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/account'
+    | '/dashboard'
+    | '/history'
     | '/login'
+    | '/profile'
+    | '/reading-progress'
+    | '/search'
+    | '/statistics'
     | '/admin/bible-import'
     | '/admin/books'
     | '/admin/languages'
@@ -172,6 +268,9 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/auth/google-callback'
     | '/book/$book'
+    | '/profile/change-password'
+    | '/profile/edit'
+    | '/quiz-setup/$book'
     | '/quiz/$book'
     | '/read/$book'
     | '/admin'
@@ -180,7 +279,13 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/admin'
+    | '/dashboard'
+    | '/history'
     | '/login'
+    | '/profile'
+    | '/reading-progress'
+    | '/search'
+    | '/statistics'
     | '/admin/bible-import'
     | '/admin/books'
     | '/admin/languages'
@@ -188,6 +293,9 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/auth/google-callback'
     | '/book/$book'
+    | '/profile/change-password'
+    | '/profile/edit'
+    | '/quiz-setup/$book'
     | '/quiz/$book'
     | '/read/$book'
     | '/admin/'
@@ -197,20 +305,69 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRoute: typeof AccountRoute
   AdminRoute: typeof AdminRouteWithChildren
+  DashboardRoute: typeof DashboardRoute
+  HistoryRoute: typeof HistoryRoute
   LoginRoute: typeof LoginRoute
+  ProfileRoute: typeof ProfileRouteWithChildren
+  ReadingProgressRoute: typeof ReadingProgressRoute
+  SearchRoute: typeof SearchRoute
+  StatisticsRoute: typeof StatisticsRoute
   AuthGoogleCallbackRoute: typeof AuthGoogleCallbackRoute
   BookBookRoute: typeof BookBookRoute
+  QuizSetupBookRoute: typeof QuizSetupBookRoute
   QuizBookRoute: typeof QuizBookRoute
   ReadBookRoute: typeof ReadBookRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/statistics': {
+      id: '/statistics'
+      path: '/statistics'
+      fullPath: '/statistics'
+      preLoaderRoute: typeof StatisticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reading-progress': {
+      id: '/reading-progress'
+      path: '/reading-progress'
+      fullPath: '/reading-progress'
+      preLoaderRoute: typeof ReadingProgressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -254,6 +411,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/quiz/$book'
       preLoaderRoute: typeof QuizBookRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/quiz-setup/$book': {
+      id: '/quiz-setup/$book'
+      path: '/quiz-setup/$book'
+      fullPath: '/quiz-setup/$book'
+      preLoaderRoute: typeof QuizSetupBookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/edit': {
+      id: '/profile/edit'
+      path: '/edit'
+      fullPath: '/profile/edit'
+      preLoaderRoute: typeof ProfileEditRouteImport
+      parentRoute: typeof ProfileRoute
+    }
+    '/profile/change-password': {
+      id: '/profile/change-password'
+      path: '/change-password'
+      fullPath: '/profile/change-password'
+      preLoaderRoute: typeof ProfileChangePasswordRouteImport
+      parentRoute: typeof ProfileRoute
     }
     '/book/$book': {
       id: '/book/$book'
@@ -327,13 +505,33 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface ProfileRouteChildren {
+  ProfileChangePasswordRoute: typeof ProfileChangePasswordRoute
+  ProfileEditRoute: typeof ProfileEditRoute
+}
+
+const ProfileRouteChildren: ProfileRouteChildren = {
+  ProfileChangePasswordRoute: ProfileChangePasswordRoute,
+  ProfileEditRoute: ProfileEditRoute,
+}
+
+const ProfileRouteWithChildren =
+  ProfileRoute._addFileChildren(ProfileRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRoute,
   AdminRoute: AdminRouteWithChildren,
+  DashboardRoute: DashboardRoute,
+  HistoryRoute: HistoryRoute,
   LoginRoute: LoginRoute,
+  ProfileRoute: ProfileRouteWithChildren,
+  ReadingProgressRoute: ReadingProgressRoute,
+  SearchRoute: SearchRoute,
+  StatisticsRoute: StatisticsRoute,
   AuthGoogleCallbackRoute: AuthGoogleCallbackRoute,
   BookBookRoute: BookBookRoute,
+  QuizSetupBookRoute: QuizSetupBookRoute,
   QuizBookRoute: QuizBookRoute,
   ReadBookRoute: ReadBookRoute,
 }
