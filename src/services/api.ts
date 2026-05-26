@@ -185,7 +185,8 @@ export type QuizQuestion = {
   question_id: number;
   text: string;
   verse_reference: string;
-  options: { label: string; text: string }[];
+  /** Options keyed by letter, e.g. { A: "Abraham", B: "Adam", ... } */
+  options: Record<string, string>;
 };
 
 export type QuizAttempt = {
@@ -200,29 +201,22 @@ export type QuizAttempt = {
 
 export type AnswerResult = {
   is_correct: boolean;
-  selected_option: string;
-  correct_option: { label: string; text: string };
+  correct_option: string;
   verse_reference?: string;
   verse_text?: string;
   explanation?: string;
-  progress: { current: number; total: number; remaining: number };
-  next_available: boolean;
-  quiz_completed?: boolean;
-  final_score?: {
-    score_percentage: number;
-    correct_answers: number;
-    wrong_answers: number;
-    total_questions: number;
-  };
+  next_question_url?: string;
+  progress: { answered: number; total: number; remaining: number };
 };
 
 export type QuizLevel = {
-  level_id: number;
+  id: number;
   level_number: number;
   name: string;
   description: string;
   color: string;
   icon: string;
+  total_questions: number;
 };
 
 export const quizService = {
@@ -232,74 +226,125 @@ export const quizService = {
   getBooks: () =>
     apiClient<{ success: boolean; data: QuizBook[] }>("/api/quiz/books"),
 
-  getLevels: (book_id: number) =>
+  getLevels: (book_id: number, language = "en") =>
     apiClient<{
-      success: boolean;
-      data: { book_id: number; book_name: string; levels: QuizLevel[] };
-    }>(`/api/quiz/books/${book_id}/levels`),
+      status: string;
+      book_id: number;
+      book_name: string;
+      levels: QuizLevel[];
+    }>(`/api/quiz/books/${book_id}/levels?language=${encodeURIComponent(language)}`),
 
-  start: (book_id: number, level_id: number, language_id: number) =>
-    apiClient<{ success: boolean; data: QuizAttempt }>(
-      "/api/quiz/quiz/start",
-      "POST",
-      { book_id, level_id, language_id }
-    ),
+  start: (
+    book_id: number,
+    level_id: number,
+    language_code: string,
+    total_questions?: number,
+  ) =>
+    apiClient<{
+      status: string;
+      attempt_id: number;
+      book: { id: number; name: string; testament: string };
+      level: { id: number; name: string; level_number: number };
+      language: string;
+      total_questions: number;
+      first_question: {
+        question_id: number;
+        text: string;
+        options: Record<string, string>;
+        verse_reference: string;
+      };
+      started_at: string;
+    }>("/api/quiz/start", "POST", {
+      book_id,
+      level_id,
+      language_code,
+      ...(total_questions ? { total_questions } : {}),
+    }),
 
   next: (attempt_id: number) =>
     apiClient<{
-      success: boolean;
-      data:
-        | {
-            attempt_id: number;
-            question_number: number;
-            remaining_questions: number;
-            question: QuizQuestion;
-          }
-        | { completed: true; message: string };
-    }>(`/api/quiz/quiz/${attempt_id}/next`),
+      status: string;
+      attempt_id?: number;
+      question_number?: number;
+      total_questions?: number;
+      question?: {
+        id: number;
+        text: string;
+        options: Record<string, string>;
+        verse_reference: string;
+      };
+      progress?: { answered: number; remaining: number; percentage: number };
+      // Completion payload
+      message?: string;
+      review_url?: string;
+      score?: { correct: number; total: number; percentage: number };
+    }>(`/api/quiz/${attempt_id}/next`),
 
   answer: (attempt_id: number, question_id: number, selected_option: string) =>
-    apiClient<{ success: boolean; data: AnswerResult }>(
-      "/api/quiz/quiz/answer",
+    apiClient<{ status: string } & AnswerResult>(
+      "/api/quiz/answer",
       "POST",
       { attempt_id, question_id, selected_option }
     ),
 
-  finish: (attempt_id: number) =>
+  finish: (attempt_id: number, force_complete = true) =>
     apiClient<{
-      success: boolean;
-      data: {
-        attempt_id: number;
-        score_percentage: number;
-        correct_answers: number;
-        wrong_answers: number;
+      status: string;
+      message: string;
+      attempt_id: number;
+      results: {
         total_questions: number;
-        status: string;
+        correct_answers: number;
+        incorrect_answers: number;
+        score_percentage: number;
+        time_taken?: string;
+        started_at?: string;
+        completed_at?: string;
       };
-    }>(`/api/quiz/quiz/${attempt_id}/finish`, "POST"),
+    }>(`/api/quiz/${attempt_id}/finish`, "POST", { force_complete }),
 
   review: (attempt_id: number) =>
     apiClient<{
-      success: boolean;
-      data: {
-        attempt_id: number;
-        summary: {
-          score_percentage: number;
-          correct_answers: number;
-          wrong_answers: number;
-          total_questions: number;
-        };
-        questions: {
-          question_id: number;
-          question: string;
-          selected_option: string;
-          correct_option: string;
-          is_correct: boolean;
-          verse_reference: string;
-          explanation: string;
-        }[];
+      status: string;
+      attempt_id: number;
+      summary: { total: number; correct: number; incorrect: number; score: number };
+      answers: {
+        question_number: number;
+        question_text: string;
+        selected_option: string;
+        correct_option: string;
+        is_correct: boolean;
+        explanation?: string;
+        verse_reference?: string;
+        correct_answer?: string;
+        user_answer?: string;
+      }[];
+      badges_earned?: { name: string; description: string }[];
+    }>(`/api/quiz/${attempt_id}/review`),
+
+  resume: (attempt_id: number) =>
+    apiClient<{
+      status: string;
+      attempt_id: number;
+      resume_data: {
+        book: { id: number; name: string };
+        level: string;
+        total_questions: number;
+        answered_questions: number;
+        current_question_index: number;
+        current_score: number;
+        answers: Record<string, string>;
+        next_question_url: string;
+        started_at: string;
+        expires_at: string;
       };
-    }>(`/api/quiz/quiz/${attempt_id}/review`),
+      next_question: {
+        id: number;
+        text: string;
+        options: Record<string, string>;
+        verse_reference?: string;
+      };
+    }>(`/api/user/quiz/resume?attempt_id=${attempt_id}`),
 };
 
 // ───────────────────────── Bible (existing) ─────────────────────────
