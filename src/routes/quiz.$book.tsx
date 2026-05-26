@@ -1,26 +1,40 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2, Check, X, Home, BookOpen } from "lucide-react";
+import { ArrowLeft, Loader2, Check, X, Home, BookOpen, Trophy, ClipboardList } from "lucide-react";
 import { Header } from "@/components/Header";
-import { quizService, type QuizQuestion, type AnswerResult } from "@/services/api";
+import { quizService, type AnswerResult } from "@/services/api";
 import { useAuth } from "@/lib/auth";
 import { bookSlug, findBook, localizedBookName } from "@/data/bible";
 import { useI18n } from "@/lib/i18n";
 
-type Search = { book_id: number; level_id: number; language_id: number };
+type Search = { book_id: number; level_id: number; language_code: string };
+
+type CurrentQuestion = {
+  id: number;
+  text: string;
+  options: Record<string, string>;
+  verse_reference?: string;
+};
+
+type FinalScore = {
+  total_questions: number;
+  correct_answers: number;
+  incorrect_answers: number;
+  score_percentage: number;
+};
 
 export const Route = createFileRoute("/quiz/$book")({
   validateSearch: (s: Record<string, unknown>): Search => ({
     book_id: Number(s.book_id),
     level_id: Number(s.level_id),
-    language_id: Number(s.language_id),
+    language_code: String(s.language_code ?? s.language ?? "en"),
   }),
   component: QuizPage,
 });
 
 function QuizPage() {
   const { book: slug } = Route.useParams();
-  const { book_id, level_id, language_id } = Route.useSearch();
+  const { book_id, level_id, language_code } = Route.useSearch();
   const { user } = useAuth();
   const { lang } = useI18n();
   const navigate = useNavigate();
@@ -30,23 +44,18 @@ function QuizPage() {
   const localized = localizedBookName(bookName, lang);
 
   const [attemptId, setAttemptId] = useState<number | null>(null);
-  const [question, setQuestion] = useState<QuizQuestion | null>(null);
+  const [question, setQuestion] = useState<CurrentQuestion | null>(null);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [picked, setPicked] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<AnswerResult | null>(null);
-  const [finalScore, setFinalScore] = useState<{
-    score_percentage: number;
-    correct_answers: number;
-    wrong_answers: number;
-    total_questions: number;
-  } | null>(null);
+  const [finalScore, setFinalScore] = useState<FinalScore | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Start quiz on mount
   useEffect(() => {
     if (!user) return;
-    if (!book_id || !level_id || !language_id) {
+    if (!book_id || !level_id || !language_code) {
       setError("Missing quiz parameters.");
       setLoading(false);
       return;
@@ -55,11 +64,18 @@ function QuizPage() {
     (async () => {
       try {
         setLoading(true);
-        const res = await quizService.start(book_id, level_id, language_id);
+        const res = await quizService.start(book_id, level_id, language_code);
         if (cancelled) return;
-        setAttemptId(res.data.attempt_id);
-        setProgress({ current: 0, total: res.data.total_questions });
-        await loadNext(res.data.attempt_id);
+        setAttemptId(res.attempt_id);
+        setProgress({ current: 1, total: res.total_questions });
+        setQuestion({
+          id: res.first_question.question_id,
+          text: res.first_question.text,
+          options: res.first_question.options,
+          verse_reference: res.first_question.verse_reference,
+        });
+        setPicked(null);
+        setFeedback(null);
       } catch (e) {
         if (!cancelled) setError((e as Error).message);
       } finally {
@@ -70,30 +86,28 @@ function QuizPage() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [book_id, level_id, language_id, user?.email]);
+  }, [book_id, level_id, language_code, user?.email]);
 
   const loadNext = async (id: number) => {
     setPicked(null);
     setFeedback(null);
     const res = await quizService.next(id);
-    const d = res.data as
-      | { attempt_id: number; question_number: number; remaining_questions: number; question: QuizQuestion }
-      | { completed: true; message: string };
-    if ("completed" in d) {
-      const fin = await quizService.finish(id);
-      setFinalScore({
-        score_percentage: fin.data.score_percentage,
-        correct_answers: fin.data.correct_answers,
-        wrong_answers: fin.data.wrong_answers,
-        total_questions: fin.data.total_questions,
+    if (res.question) {
+      setQuestion({
+        id: res.question.id,
+        text: res.question.text,
+        options: res.question.options,
+        verse_reference: res.question.verse_reference,
       });
-      setQuestion(null);
-    } else {
-      setQuestion(d.question);
       setProgress({
-        current: d.question_number,
-        total: d.question_number + d.remaining_questions,
+        current: res.question_number ?? progress.current + 1,
+        total: res.total_questions ?? progress.total,
       });
+    } else {
+      // Completed — finalize.
+      const fin = await quizService.finish(id);
+      setFinalScore(fin.results);
+      setQuestion(null);
     }
   };
 
@@ -101,12 +115,12 @@ function QuizPage() {
     if (!attemptId || !question || !picked) return;
     try {
       setLoading(true);
-      const res = await quizService.answer(attemptId, question.question_id, picked);
-      setFeedback(res.data);
-      if (res.data.quiz_completed && res.data.final_score) {
-        setFinalScore(res.data.final_score);
-        setQuestion(null);
-      }
+      const res = await quizService.answer(attemptId, question.id, picked);
+      setFeedback(res);
+      setProgress({
+        current: res.progress.answered,
+        total: res.progress.total,
+      });
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -125,6 +139,9 @@ function QuizPage() {
       setLoading(false);
     }
   };
+
+  const isLastAnswered =
+    !!feedback && progress.total > 0 && progress.current >= progress.total;
 
   if (!user) {
     return (
@@ -156,6 +173,18 @@ function QuizPage() {
             {progress.total > 0 ? `${progress.current} / ${progress.total}` : ""}
           </span>
         </div>
+        {progress.total > 0 && (
+          <div className="mx-auto max-w-3xl px-4 pb-3">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-primary/15">
+              <div
+                className="h-full bg-primary transition-all"
+                style={{
+                  width: `${Math.min(100, Math.round((progress.current / progress.total) * 100))}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <main className="mx-auto max-w-3xl px-4 py-8">
@@ -171,6 +200,9 @@ function QuizPage() {
           </div>
         ) : finalScore ? (
           <div className="rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
+            <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
+              <Trophy className="h-6 w-6" />
+            </div>
             <p className="text-sm uppercase tracking-wider text-muted-foreground">Quiz Result</p>
             <div className="mt-3 font-serif text-5xl font-semibold text-foreground">
               {finalScore.correct_answers}
@@ -180,12 +212,27 @@ function QuizPage() {
               {finalScore.score_percentage.toFixed(0)}%
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-2">
+              {attemptId && (
+                <button
+                  onClick={async () => {
+                    try {
+                      await quizService.review(attemptId);
+                      // For now just refetch; a dedicated review screen can consume it.
+                    } catch (e) {
+                      setError((e as Error).message);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+                >
+                  <ClipboardList className="h-4 w-4" /> Review
+                </button>
+              )}
               <button
                 onClick={() =>
                   navigate({
                     to: "/quiz/$book",
                     params: { book: bookSlug(bookName) },
-                    search: { book_id, level_id, language_id },
+                    search: { book_id, level_id, language_code },
                     replace: true,
                   })
                 }
@@ -217,14 +264,14 @@ function QuizPage() {
               {question.text}
             </h2>
             <div className="space-y-2">
-              {question.options.map((opt) => {
-                const isPicked = picked === opt.label;
-                const correct = feedback?.correct_option.label === opt.label;
-                const wrongPick = feedback && isPicked && !feedback.is_correct;
+              {Object.entries(question.options).map(([label, text]) => {
+                const isPicked = picked === label;
+                const correct = feedback?.correct_option === label;
+                const wrongPick = !!feedback && isPicked && !feedback.is_correct;
                 return (
                   <button
-                    key={opt.label}
-                    onClick={() => !feedback && setPicked(opt.label)}
+                    key={label}
+                    onClick={() => !feedback && setPicked(label)}
                     disabled={!!feedback}
                     className={`flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-left transition ${
                       feedback && correct
@@ -237,9 +284,9 @@ function QuizPage() {
                     }`}
                   >
                     <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-border text-xs font-medium">
-                      {opt.label}
+                      {label}
                     </span>
-                    <span className="flex-1">{opt.text}</span>
+                    <span className="flex-1">{text}</span>
                     {feedback && correct && <Check className="h-4 w-4 text-primary" />}
                     {wrongPick && <X className="h-4 w-4 text-destructive" />}
                   </button>
@@ -267,7 +314,7 @@ function QuizPage() {
                   onClick={next}
                   className="rounded-full bg-primary px-6 py-2 text-sm font-medium text-primary-foreground"
                 >
-                  {feedback.quiz_completed ? "See Result" : "Next"}
+                  {isLastAnswered ? "See Result" : "Next"}
                 </button>
               ) : (
                 <button
