@@ -348,6 +348,20 @@ export const bibleService = {
       "/api/bible/languages"
     ),
 
+  getVerseOfTheDay: (lang: string) =>
+    apiClient<{
+      status: string;
+      data: { reference: string; book: string; chapter: number; verse: number; text: string };
+    }>(`/api/bible/verse-of-the-day?language=${encodeURIComponent(lang)}`),
+
+  search: (q: string, lang: string, limit = 50) =>
+    apiClient<{
+      status: string;
+      query: string;
+      total: number;
+      results: { reference: string; book: string; chapter: number; verse: number; text: string }[];
+    }>(`/api/bible/search?q=${encodeURIComponent(q)}&language=${encodeURIComponent(lang)}&limit=${limit}`),
+
   getBooksByLanguage: (lang: string) =>
     apiClient<{ books: { id: number; name: string; testament: "Old" | "New"; chapters: number }[] }>(
       `/api/bible/books/by-language?language=${encodeURIComponent(lang)}`
