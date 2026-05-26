@@ -6,7 +6,11 @@ const TOKEN_KEY = "bible.token";
 
 export const getToken = (): string | null => {
   try {
-    return localStorage.getItem(TOKEN_KEY);
+    return (
+      localStorage.getItem(TOKEN_KEY) ||
+      localStorage.getItem("access_token") ||
+      localStorage.getItem("token")
+    );
   } catch {
     return null;
   }
@@ -14,8 +18,16 @@ export const getToken = (): string | null => {
 
 export const setToken = (token: string | null) => {
   try {
-    if (token) localStorage.setItem(TOKEN_KEY, token);
-    else localStorage.removeItem(TOKEN_KEY);
+    if (token) {
+      localStorage.setItem(TOKEN_KEY, token);
+      // Mirror for compatibility with backends/snippets expecting these keys.
+      localStorage.setItem("access_token", token);
+      localStorage.setItem("token", token);
+    } else {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("token");
+    }
   } catch {}
 };
 

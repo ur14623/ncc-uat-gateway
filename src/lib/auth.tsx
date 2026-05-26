@@ -1,6 +1,18 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { authService, setToken, userService } from "@/services/api";
 
+const extractToken = (res: any): string | null => {
+  return (
+    res?.token ||
+    res?.access_token ||
+    res?.accessToken ||
+    res?.data?.token ||
+    res?.data?.access_token ||
+    res?.user?.token ||
+    null
+  );
+};
+
 export type QuizResult = {
   book: string;
   level: number;
@@ -50,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const res = await authService.login(email, password);
-    setToken(res.token);
+    setToken(extractToken(res));
     const u: User = {
       name: res.user?.username || email.split("@")[0],
       email: res.user?.email || email,
@@ -62,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (username: string, email: string, password: string) => {
     const res = await authService.register(email, password, username);
-    setToken(res.token);
+    setToken(extractToken(res));
     const u: User = {
       name: res.user?.username || username,
       email: res.user?.email || email,
