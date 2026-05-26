@@ -36,12 +36,12 @@ function QuizSetupPage() {
 
   const levelsQ = useQuery({
     queryKey: ["quiz-levels", bookId],
-    queryFn: () => quizService.getLevels(bookId as number),
+    queryFn: () => quizService.getLevels(bookId as number, lang),
     enabled: !!bookId,
     staleTime: 1000 * 60 * 10,
   });
 
-  const levels: QuizLevel[] = levelsQ.data?.data.levels ?? [];
+  const levels: QuizLevel[] = levelsQ.data?.levels ?? [];
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
@@ -52,17 +52,23 @@ function QuizSetupPage() {
       navigate({ to: "/login" });
       return;
     }
-    if (!bookId || !selectedLevel || !languageId) {
+    if (!bookId || !selectedLevel || !lang) {
       setStartError("Missing book, level, or language selection.");
       return;
     }
     try {
       setStarting(true);
-      await quizService.start(bookId, selectedLevel, languageId);
+      const selectedLevelObj = levels.find((l) => l.id === selectedLevel);
+      await quizService.start(
+        bookId,
+        selectedLevel,
+        lang,
+        selectedLevelObj?.total_questions,
+      );
       navigate({
         to: "/quiz/$book",
         params: { book: slug },
-        search: { book_id: bookId, level_id: selectedLevel, language_id: languageId },
+        search: { book_id: bookId, level_id: selectedLevel, language_code: lang },
       });
     } catch (e) {
       setStartError((e as Error).message || "Failed to start quiz.");
@@ -174,7 +180,7 @@ function LevelDropdown({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const selected = levels.find((l) => l.level_id === selectedId) ?? null;
+  const selected = levels.find((l) => l.id === selectedId) ?? null;
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
@@ -234,13 +240,13 @@ function LevelDropdown({
           <div className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-2xl border border-border bg-popover shadow-xl">
             <ul className="max-h-80 overflow-y-auto py-1">
               {levels.map((lvl) => {
-                const active = selectedId === lvl.level_id;
+                const active = selectedId === lvl.id;
                 return (
-                  <li key={lvl.level_id}>
+                  <li key={lvl.id}>
                     <button
                       type="button"
                       onClick={() => {
-                        onSelect(lvl.level_id);
+                        onSelect(lvl.id);
                         setOpen(false);
                       }}
                       className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition hover:bg-secondary ${
